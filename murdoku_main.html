@@ -1,0 +1,2758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MURDOKU — Misterio en la casa</title>
+
+<style>
+:root{
+    --bg:#e9e4dc;
+    --panel:#fffdf9;
+    --ink:#28272a;
+    --muted:#706b68;
+    --line:#403c3a;
+    --accent:#8c5c48;
+    --accent-dark:#694536;
+    --green:#b9e6ae;
+    --green-border:#4d9650;
+    --red:#efaaa2;
+    --gold:#e7c86e;
+    --shadow:0 12px 30px rgba(45,38,33,.12);
+}
+
+*{
+    box-sizing:border-box;
+}
+
+html,body{
+    margin:0;
+    min-height:100%;
+}
+
+body{
+    font-family:Arial, Helvetica, sans-serif;
+    background:
+        radial-gradient(circle at 15% 10%, rgba(255,255,255,.7), transparent 28%),
+        radial-gradient(circle at 85% 80%, rgba(255,255,255,.5), transparent 30%),
+        var(--bg);
+    color:var(--ink);
+}
+
+button{
+    font:inherit;
+}
+
+.app{
+    min-height:100vh;
+    padding:22px;
+}
+
+.topbar{
+    max-width:1500px;
+    margin:0 auto 18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:18px;
+    padding:15px 20px;
+    box-shadow:var(--shadow);
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:13px;
+}
+
+.logo{
+    width:52px;
+    height:52px;
+    border-radius:14px;
+    display:grid;
+    place-items:center;
+    background:#403c3a;
+    color:#fff;
+    font-size:27px;
+    font-weight:900;
+    box-shadow:inset 0 -5px 0 rgba(0,0,0,.12);
+}
+
+.brand h1{
+    margin:0;
+    font-size:25px;
+    letter-spacing:1px;
+}
+
+.brand p{
+    margin:3px 0 0;
+    color:var(--muted);
+    font-size:13px;
+}
+
+.timer-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 15px;
+    border:2px solid #d2c7bd;
+    border-radius:12px;
+    background:#faf6ef;
+    font-weight:800;
+}
+
+.timer-icon{
+    font-size:21px;
+}
+
+#timer{
+    min-width:58px;
+    font-variant-numeric:tabular-nums;
+    font-size:19px;
+}
+
+.game-layout{
+    max-width:1500px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:300px minmax(500px,1fr) 190px;
+    gap:18px;
+    align-items:start;
+}
+
+.panel{
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+}
+
+.suspects-panel{
+    padding:17px;
+}
+
+.panel-heading{
+    margin-bottom:14px;
+}
+
+.panel-heading h2{
+    margin:0;
+    font-size:19px;
+}
+
+.panel-heading p{
+    margin:5px 0 0;
+    color:var(--muted);
+    font-size:12px;
+}
+
+.people-list{
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+}
+
+.person-card{
+    position:relative;
+    display:grid;
+    grid-template-columns:58px 1fr;
+    gap:11px;
+    align-items:center;
+    min-height:82px;
+    padding:9px;
+    background:#faf8f4;
+    border:2px solid #ddd4cc;
+    border-radius:13px;
+    cursor:pointer;
+    transition:.18s ease;
+    user-select:none;
+}
+
+.person-card:hover{
+    transform:translateY(-1px);
+    border-color:#9c8476;
+    box-shadow:0 5px 14px rgba(45,38,33,.09);
+}
+
+.person-card.selected{
+    border-color:var(--accent);
+    background:#f5e9e1;
+    box-shadow:0 0 0 3px rgba(140,92,72,.12);
+}
+
+.person-card.dragging{
+    opacity:.45;
+}
+
+.card-name{
+    margin:0 0 4px;
+    font-size:15px;
+    font-weight:900;
+}
+
+.card-clue{
+    color:#5f5956;
+    line-height:1.3;
+    font-size:11px;
+}
+
+.avatar{
+    position:relative;
+    width:54px;
+    height:62px;
+    overflow:hidden;
+    flex:none;
+}
+
+.avatar .head{
+    position:absolute;
+    width:31px;
+    height:32px;
+    left:12px;
+    top:5px;
+    border-radius:50% 50% 45% 45%;
+    background:#e7b28f;
+    border:2px solid #503b32;
+    z-index:3;
+}
+
+.avatar .hair{
+    position:absolute;
+    width:35px;
+    height:25px;
+    left:10px;
+    top:2px;
+    border-radius:55% 55% 30% 30%;
+    background:#3b2c28;
+    border:2px solid #503b32;
+    z-index:4;
+}
+
+.avatar .eye{
+    position:absolute;
+    width:4px;
+    height:4px;
+    border-radius:50%;
+    background:#302724;
+    top:20px;
+    z-index:6;
+}
+
+.avatar .eye.left{left:19px}
+.avatar .eye.right{left:32px}
+
+.avatar .neck{
+    position:absolute;
+    width:12px;
+    height:10px;
+    left:21px;
+    top:34px;
+    background:#d69e7e;
+    border-left:2px solid #503b32;
+    border-right:2px solid #503b32;
+    z-index:2;
+}
+
+.avatar .body{
+    position:absolute;
+    width:46px;
+    height:28px;
+    left:4px;
+    top:36px;
+    border-radius:15px 15px 7px 7px;
+    background:#68758e;
+    border:2px solid #3f414a;
+    z-index:1;
+}
+
+.avatar .feature{
+    position:absolute;
+    z-index:8;
+}
+
+.avatar.glasses .feature{
+    width:30px;
+    height:8px;
+    left:13px;
+    top:18px;
+    border-top:2px solid #28282a;
+    border-bottom:2px solid #28282a;
+}
+
+.avatar.austin .hair{background:#302826}
+.avatar.austin .body{background:#6e8294}
+
+.avatar.barbara .hair{
+    height:31px;
+    width:37px;
+    left:9px;
+    top:2px;
+    background:#382c2d;
+    border-radius:52% 52% 35% 35%;
+}
+
+.avatar.barbara .body{background:#9b7082}
+
+.avatar.charlotte .hair{
+    background:#d4b46c;
+    width:37px;
+    left:9px;
+    border-radius:55% 55% 25% 25%;
+}
+
+.avatar.charlotte .body{background:#b07f5c}
+
+.avatar.dean .hair{background:#473832}
+.avatar.dean .body{background:#66735d}
+
+.avatar.enid .hair{
+    background:#733f47;
+    width:38px;
+    left:8px;
+}
+
+.avatar.enid .body{background:#8b698e}
+
+.avatar.vaughn .hair{
+    background:#554139;
+    width:34px;
+    left:10px;
+}
+
+.avatar.vaughn .body{background:#5b6678}
+
+.board-panel{
+    padding:15px;
+    min-width:0;
+}
+
+.board-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin:0 2px 12px;
+}
+
+.board-title h2{
+    margin:0;
+    font-size:19px;
+}
+
+.board-title span{
+    color:var(--muted);
+    font-size:12px;
+}
+
+.house{
+    width:100%;
+    aspect-ratio:1 / 1;
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    grid-template-rows:repeat(6,1fr);
+    gap:4px;
+    padding:5px;
+    background:#373431;
+    border:3px solid #2f2c2a;
+    border-radius:15px;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.15);
+    position:relative;
+}
+
+.cell{
+    position:relative;
+    min-width:0;
+    min-height:0;
+    border:1px solid rgba(55,48,43,.4);
+    border-radius:7px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:.13s ease;
+    user-select:none;
+}
+
+.cell.bath{background:#d9edf1}
+.cell.bedroom{background:#eee1ed}
+.cell.kitchen{background:#f5edcf}
+.cell.living{background:#e7e5d5}
+
+.cell::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    border-radius:6px;
+}
+
+.cell.room-edge-right{
+    border-right:4px solid #504b48;
+}
+
+.cell.room-edge-bottom{
+    border-bottom:4px solid #504b48;
+}
+
+.cell.highlight{
+    background:var(--green) !important;
+    border:3px solid var(--green-border);
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);
+}
+
+.cell.highlight:hover{
+    transform:scale(.985);
+}
+
+.cell.impossible{
+    background:
+        linear-gradient(135deg, transparent 44%, rgba(75,57,51,.22) 45%, rgba(75,57,51,.22) 53%, transparent 54%),
+        linear-gradient(45deg, transparent 44%, rgba(75,57,51,.22) 45%, rgba(75,57,51,.22) 53%, transparent 54%),
+        #ddd7d0 !important;
+}
+
+.cell.incorrect{
+    box-shadow:inset 0 0 0 4px #c6534a;
+    background:#f5c3be !important;
+}
+
+.room-label{
+    position:absolute;
+    z-index:1;
+    left:5px;
+    top:4px;
+    padding:3px 6px;
+    border-radius:6px;
+    background:rgba(255,255,255,.62);
+    border:1px solid rgba(70,63,59,.22);
+    color:#504943;
+    font-size:clamp(7px,1vw,10px);
+    font-weight:900;
+    letter-spacing:.3px;
+    pointer-events:none;
+}
+
+.room-label.small{
+    font-size:7px;
+}
+
+.object{
+    position:absolute;
+    left:50%;
+    top:53%;
+    transform:translate(-50%,-50%);
+    z-index:3;
+    pointer-events:none;
+}
+
+.object.sofa{
+    width:68%;
+    height:48%;
+    top:61%;
+}
+
+.sofa .sofa-back{
+    position:absolute;
+    left:3%;
+    right:3%;
+    top:5%;
+    height:43%;
+    border:2px solid #55433a;
+    border-radius:9px 9px 4px 4px;
+    background:#9b7664;
+}
+
+.sofa .sofa-seat{
+    position:absolute;
+    left:10%;
+    right:10%;
+    top:43%;
+    height:38%;
+    border:2px solid #55433a;
+    border-radius:5px;
+    background:#b68e77;
+}
+
+.sofa .arm{
+    position:absolute;
+    width:15%;
+    height:52%;
+    top:30%;
+    background:#886454;
+    border:2px solid #55433a;
+    border-radius:7px;
+}
+
+.sofa .arm.left{left:0}
+.sofa .arm.right{right:0}
+
+.object.chair{
+    width:56%;
+    height:65%;
+    top:56%;
+}
+
+.chair .chair-back{
+    position:absolute;
+    left:24%;
+    top:2%;
+    width:52%;
+    height:47%;
+    background:#a87959;
+    border:2px solid #553f33;
+    border-radius:5px 5px 3px 3px;
+}
+
+.chair .chair-seat{
+    position:absolute;
+    left:17%;
+    top:42%;
+    width:66%;
+    height:19%;
+    background:#c09069;
+    border:2px solid #553f33;
+    border-radius:3px;
+}
+
+.chair .leg{
+    position:absolute;
+    top:59%;
+    width:9%;
+    height:38%;
+    background:#5c4639;
+    border-radius:2px;
+}
+
+.chair .leg.l1{left:22%}
+.chair .leg.l2{right:22%}
+
+.object.bed{
+    width:82%;
+    height:76%;
+    top:58%;
+}
+
+.bed .headboard{
+    position:absolute;
+    left:3%;
+    top:5%;
+    width:17%;
+    height:88%;
+    background:#80604e;
+    border:2px solid #4f3d34;
+    border-radius:5px;
+}
+
+.bed .mattress{
+    position:absolute;
+    left:17%;
+    top:21%;
+    width:77%;
+    height:65%;
+    background:#fffaf1;
+    border:2px solid #69574d;
+    border-radius:5px 9px 9px 5px;
+}
+
+.bed .blanket{
+    position:absolute;
+    left:39%;
+    top:27%;
+    width:52%;
+    height:53%;
+    background:#b8a3c2;
+    border-radius:3px 7px 7px 3px;
+}
+
+.bed .pillow{
+    position:absolute;
+    left:22%;
+    top:28%;
+    width:17%;
+    height:23%;
+    background:#f7eee1;
+    border:1px solid #b9aaa0;
+    border-radius:7px;
+}
+
+.object.shelf{
+    width:72%;
+    height:72%;
+    top:55%;
+}
+
+.shelf .side{
+    position:absolute;
+    top:4%;
+    bottom:3%;
+    width:8%;
+    background:#70503f;
+    border:2px solid #49372e;
+}
+
+.shelf .side.left{left:4%}
+.shelf .side.right{right:4%}
+
+.shelf .level{
+    position:absolute;
+    left:4%;
+    right:4%;
+    height:8%;
+    background:#8d674f;
+    border:2px solid #49372e;
+    border-radius:2px;
+}
+
+.shelf .level.l1{top:12%}
+.shelf .level.l2{top:39%}
+.shelf .level.l3{top:66%}
+.shelf .level.l4{top:91%}
+
+.book{
+    position:absolute;
+    width:9%;
+    border-radius:1px;
+}
+
+.book.b1{left:19%;top:18%;height:17%;background:#9b5551}
+.book.b2{left:30%;top:19%;height:15%;background:#617b87}
+.book.b3{left:52%;top:45%;height:17%;background:#ad8051}
+.book.b4{left:64%;top:44%;height:18%;background:#75608a}
+.book.b5{left:25%;top:71%;height:15%;background:#6e7957}
+
+.object.tv{
+    width:76%;
+    height:65%;
+    top:54%;
+}
+
+.tv .screen{
+    position:absolute;
+    left:8%;
+    top:4%;
+    width:84%;
+    height:64%;
+    border:4px solid #39383a;
+    border-radius:5px;
+    background:
+        radial-gradient(circle at 65% 35%, #758a9a 0 8%, transparent 9%),
+        linear-gradient(135deg,#4d6874,#27343c);
+    box-shadow:inset 0 0 0 2px #777;
+}
+
+.tv .screen::after{
+    content:"";
+    position:absolute;
+    width:23%;
+    height:13%;
+    left:38%;
+    bottom:7%;
+    background:rgba(255,255,255,.22);
+    border-radius:50%;
+}
+
+.tv .stand{
+    position:absolute;
+    width:14%;
+    height:19%;
+    left:43%;
+    top:68%;
+    background:#39383a;
+}
+
+.tv .base{
+    position:absolute;
+    width:48%;
+    height:9%;
+    left:26%;
+    top:84%;
+    border-radius:5px;
+    background:#39383a;
+}
+
+.object.table{
+    width:78%;
+    height:72%;
+    top:56%;
+}
+
+.table .top{
+    position:absolute;
+    width:100%;
+    height:27%;
+    top:18%;
+    border:2px solid #5b4436;
+    border-radius:5px;
+    background:#b98b61;
+}
+
+.table .leg{
+    position:absolute;
+    width:9%;
+    height:55%;
+    top:35%;
+    background:#70513e;
+    border:1px solid #4f392d;
+}
+
+.table .leg.l1{left:10%}
+.table .leg.l2{right:10%}
+
+.object.plant{
+    width:65%;
+    height:78%;
+    top:52%;
+}
+
+.pot{
+    position:absolute;
+    left:29%;
+    bottom:5%;
+    width:43%;
+    height:29%;
+    background:#b56f4f;
+    border:2px solid #654436;
+    border-radius:3px 3px 10px 10px;
+}
+
+.leaf{
+    position:absolute;
+    width:27%;
+    height:37%;
+    background:#62815e;
+    border:2px solid #466046;
+    border-radius:80% 15% 80% 15%;
+    transform-origin:bottom center;
+}
+
+.leaf.l1{left:34%;top:8%;transform:rotate(-30deg)}
+.leaf.l2{left:45%;top:2%;transform:rotate(8deg)}
+.leaf.l3{left:51%;top:15%;transform:rotate(34deg)}
+.leaf.l4{left:22%;top:20%;transform:rotate(-55deg)}
+
+.object.sink{
+    width:78%;
+    height:65%;
+    top:57%;
+}
+
+.sink .basin{
+    position:absolute;
+    left:7%;
+    top:31%;
+    width:86%;
+    height:43%;
+    border:2px solid #67757a;
+    border-radius:8px 8px 14px 14px;
+    background:#edf5f5;
+}
+
+.sink .faucet{
+    position:absolute;
+    left:42%;
+    top:8%;
+    width:18%;
+    height:31%;
+    border:3px solid #667477;
+    border-bottom:0;
+    border-radius:12px 12px 0 0;
+}
+
+.sink .water{
+    position:absolute;
+    left:50%;
+    top:32%;
+    width:3px;
+    height:19%;
+    background:#8fb8c4;
+}
+
+.object.bathtub{
+    width:84%;
+    height:65%;
+    top:56%;
+}
+
+.bathtub .body{
+    position:absolute;
+    left:4%;
+    top:26%;
+    width:92%;
+    height:52%;
+    border:3px solid #69777a;
+    border-radius:10px 10px 18px 18px;
+    background:#f3f7f5;
+}
+
+.bathtub .water{
+    position:absolute;
+    left:10%;
+    top:37%;
+    width:80%;
+    height:23%;
+    border-radius:50%;
+    background:#c4e2e8;
+}
+
+.bathtub .leg{
+    position:absolute;
+    width:9%;
+    height:15%;
+    bottom:2%;
+    background:#777;
+}
+
+.bathtub .leg.l{left:13%}
+.bathtub .leg.r{right:13%}
+
+.person-token{
+    position:absolute;
+    left:50%;
+    top:54%;
+    transform:translate(-50%,-50%);
+    width:78%;
+    height:90%;
+    min-width:45px;
+    z-index:10;
+    pointer-events:none;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-end;
+}
+
+.token-avatar{
+    position:relative;
+    width:52%;
+    max-width:58px;
+    min-width:34px;
+    aspect-ratio:54/62;
+}
+
+.token-avatar .head{
+    position:absolute;
+    width:57%;
+    height:50%;
+    left:22%;
+    top:6%;
+    border-radius:50%;
+    background:#e7b28f;
+    border:1.5px solid #4c3a33;
+    z-index:3;
+}
+
+.token-avatar .hair{
+    position:absolute;
+    width:65%;
+    height:39%;
+    left:18%;
+    top:2%;
+    border-radius:55% 55% 35% 35%;
+    background:#3b2c28;
+    border:1.5px solid #503b32;
+    z-index:4;
+}
+
+.token-avatar .body{
+    position:absolute;
+    width:82%;
+    height:43%;
+    left:9%;
+    top:55%;
+    border-radius:45% 45% 10% 10%;
+    background:#68758e;
+    border:1.5px solid #3f414a;
+    z-index:1;
+}
+
+.token-avatar .eye{
+    position:absolute;
+    width:7%;
+    aspect-ratio:1;
+    border-radius:50%;
+    background:#302724;
+    top:31%;
+    z-index:7;
+}
+
+.token-avatar .eye.left{left:35%}
+.token-avatar .eye.right{left:58%}
+
+.token-avatar.glasses .feature{
+    position:absolute;
+    width:58%;
+    height:16%;
+    left:21%;
+    top:28%;
+    border-top:2px solid #222;
+    border-bottom:2px solid #222;
+    z-index:8;
+}
+
+.token-avatar.austin .hair{background:#302826}
+.token-avatar.austin .body{background:#6e8294}
+
+.token-avatar.barbara .hair{
+    width:69%;
+    height:48%;
+    left:15%;
+    background:#382c2d;
+}
+
+.token-avatar.barbara .body{background:#9b7082}
+
+.token-avatar.charlotte .hair{
+    width:69%;
+    left:15%;
+    background:#d4b46c;
+}
+
+.token-avatar.charlotte .body{background:#b07f5c}
+
+.token-avatar.dean .hair{background:#473832}
+.token-avatar.dean .body{background:#66735d}
+
+.token-avatar.enid .hair{
+    width:70%;
+    left:15%;
+    background:#733f47;
+}
+
+.token-avatar.enid .body{background:#8b698e}
+
+.token-avatar.vaughn .hair{
+    width:65%;
+    left:18%;
+    background:#554139;
+}
+
+.token-avatar.vaughn .body{background:#5b6678}
+
+.token-label{
+    max-width:95%;
+    padding:2px 5px;
+    border-radius:5px;
+    background:rgba(255,255,255,.94);
+    border:1px solid #544a45;
+    color:#292624;
+    font-size:clamp(7px,1.15vw,11px);
+    font-weight:900;
+    line-height:1.1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.impossible-mark{
+    position:absolute;
+    z-index:20;
+    inset:0;
+    display:grid;
+    place-items:center;
+    color:#794e48;
+    font-size:clamp(24px,4vw,42px);
+    font-weight:900;
+    text-shadow:0 1px 0 #fff;
+    pointer-events:none;
+}
+
+.tool-panel{
+    padding:15px;
+}
+
+.tools-title{
+    margin:0 0 12px;
+    font-size:18px;
+}
+
+.tool-buttons{
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+}
+
+.tool-btn{
+    min-height:46px;
+    border:2px solid #5c5550;
+    border-radius:11px;
+    background:#fffaf4;
+    color:#332f2d;
+    font-weight:900;
+    cursor:pointer;
+    transition:.15s;
+}
+
+.tool-btn:hover{
+    transform:translateY(-1px);
+    background:#f5eee5;
+}
+
+.tool-btn.active{
+    background:#e7d4c8;
+    border-color:var(--accent);
+    color:#56382c;
+}
+
+.tool-btn.send{
+    margin-top:5px;
+    background:#5e765e;
+    border-color:#415442;
+    color:white;
+    min-height:54px;
+}
+
+.tool-btn.send:hover{
+    background:#506851;
+}
+
+.tool-btn.how{
+    margin-top:2px;
+    background:#eee8df;
+}
+
+.status-box{
+    margin-top:13px;
+    padding:11px;
+    border:1px solid #d7cec5;
+    border-radius:10px;
+    background:#faf7f2;
+    font-size:11px;
+    line-height:1.45;
+    color:#625b57;
+}
+
+.status-box strong{
+    display:block;
+    color:#393431;
+    margin-bottom:4px;
+}
+
+.guide{
+    max-width:1500px;
+    margin:18px auto 0;
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:15px;
+    padding:12px 16px;
+    box-shadow:var(--shadow);
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 24px;
+    align-items:center;
+    color:#5d5652;
+    font-size:12px;
+}
+
+.guide strong{
+    color:#393431;
+}
+
+.toast{
+    position:fixed;
+    left:50%;
+    bottom:25px;
+    transform:translate(-50%,20px);
+    opacity:0;
+    pointer-events:none;
+    background:#302d2b;
+    color:white;
+    border-radius:10px;
+    padding:11px 16px;
+    box-shadow:0 8px 25px rgba(0,0,0,.2);
+    z-index:1000;
+    transition:.22s;
+    font-weight:700;
+    font-size:13px;
+}
+
+.toast.show{
+    opacity:1;
+    transform:translate(-50%,0);
+}
+
+.modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(31,27,25,.64);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:900;
+}
+
+.modal-backdrop.open{
+    display:flex;
+}
+
+.modal{
+    width:min(560px,100%);
+    max-height:90vh;
+    overflow:auto;
+    background:#fffdf9;
+    border:3px solid #403c3a;
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 25px 70px rgba(0,0,0,.3);
+    animation:modalIn .2s ease;
+}
+
+@keyframes modalIn{
+    from{opacity:0;transform:scale(.94) translateY(10px)}
+    to{opacity:1;transform:scale(1) translateY(0)}
+}
+
+.modal h2{
+    margin:0 0 12px;
+    font-size:27px;
+}
+
+.modal p{
+    line-height:1.55;
+    color:#57514d;
+}
+
+.modal .close{
+    display:block;
+    width:100%;
+    margin-top:20px;
+    padding:12px;
+    border:0;
+    border-radius:11px;
+    background:#403c3a;
+    color:white;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.success-modal{
+    text-align:center;
+}
+
+.success-icon{
+    font-size:65px;
+    margin-bottom:4px;
+}
+
+.success-modal h2{
+    color:#4f704e;
+}
+
+.solution-text{
+    margin:18px 0;
+    padding:15px;
+    border-radius:12px;
+    background:#edf5e9;
+    border:2px solid #bdd2b8;
+    color:#3e5b3c !important;
+    font-size:16px;
+    font-weight:800;
+}
+
+.error-modal h2{
+    color:#934d47;
+}
+
+.error-list{
+    margin-top:15px;
+    display:grid;
+    gap:7px;
+}
+
+.error-item{
+    padding:8px 10px;
+    background:#f8e4e1;
+    border:1px solid #e1b7b1;
+    border-radius:8px;
+    font-size:13px;
+}
+
+.how-list{
+    padding-left:22px;
+    line-height:1.7;
+    color:#504a46;
+}
+
+.highlight-key{
+    display:inline-block;
+    width:14px;
+    height:14px;
+    border-radius:4px;
+    background:var(--green);
+    border:2px solid var(--green-border);
+    vertical-align:-2px;
+    margin-right:4px;
+}
+
+@media(max-width:1100px){
+    .game-layout{
+        grid-template-columns:260px minmax(450px,1fr);
+    }
+
+    .tool-panel{
+        grid-column:1 / -1;
+    }
+
+    .tool-buttons{
+        flex-direction:row;
+        flex-wrap:wrap;
+    }
+
+    .tool-btn{
+        flex:1 1 150px;
+    }
+
+    .status-box{
+        width:100%;
+    }
+}
+
+@media(max-width:760px){
+    .app{
+        padding:10px;
+    }
+
+    .topbar{
+        padding:12px;
+    }
+
+    .brand h1{
+        font-size:20px;
+    }
+
+    .logo{
+        width:43px;
+        height:43px;
+        font-size:22px;
+    }
+
+    .game-layout{
+        display:flex;
+        flex-direction:column;
+    }
+
+    .suspects-panel,
+    .board-panel,
+    .tool-panel{
+        width:100%;
+    }
+
+    .people-list{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .person-card{
+        grid-template-columns:48px 1fr;
+        min-height:75px;
+        padding:7px;
+    }
+
+    .avatar{
+        transform:scale(.88);
+        transform-origin:center;
+    }
+
+    .board-panel{
+        order:1;
+    }
+
+    .suspects-panel{
+        order:0;
+    }
+
+    .tool-panel{
+        order:2;
+    }
+
+    .board-title{
+        margin-bottom:8px;
+    }
+
+    .guide{
+        margin-top:10px;
+        padding:11px;
+    }
+}
+
+@media(max-width:470px){
+    .people-list{
+        grid-template-columns:1fr;
+    }
+
+    .person-card{
+        grid-template-columns:55px 1fr;
+    }
+
+    .house{
+        gap:2px;
+        padding:3px;
+        border-width:2px;
+    }
+
+    .room-label{
+        padding:2px 3px;
+        font-size:6px;
+    }
+
+    .token-label{
+        font-size:7px;
+    }
+
+    .timer-box{
+        padding:7px 9px;
+    }
+
+    .timer-icon{
+        display:none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <header class="topbar">
+        <div class="brand">
+            <div class="logo">M</div>
+            <div>
+                <h1>MURDOKU</h1>
+                <p>Misterio en la casa</p>
+            </div>
+        </div>
+
+        <div class="timer-box">
+            <span class="timer-icon">⏱</span>
+            <span id="timer">00:00</span>
+        </div>
+    </header>
+
+    <main class="game-layout">
+
+        <aside class="panel suspects-panel">
+            <div class="panel-heading">
+                <h2>Sospechosos</h2>
+                <p>Selecciona o arrastra un personaje.</p>
+            </div>
+            <div id="peopleList" class="people-list"></div>
+        </aside>
+
+        <section class="panel board-panel">
+            <div class="board-title">
+                <h2>Plano de la casa</h2>
+                <span>6 × 6</span>
+            </div>
+            <div id="house" class="house"></div>
+        </section>
+
+        <aside class="panel tool-panel">
+            <h2 class="tools-title">Herramientas</h2>
+
+            <div class="tool-buttons">
+                <button id="impossibleBtn" class="tool-btn" type="button">✕ MARCAR X</button>
+                <button id="eraseBtn" class="tool-btn" type="button">BORRAR</button>
+                <button id="undoBtn" class="tool-btn" type="button">↶ DESHACER</button>
+                <button id="hintBtn" class="tool-btn" type="button">PISTA</button>
+                <button id="sendBtn" class="tool-btn send" type="button">ENVIAR</button>
+                <button id="howBtn" class="tool-btn how" type="button">CÓMO JUGAR</button>
+            </div>
+
+            <div class="status-box">
+                <strong id="selectionStatus">Ningún sospechoso seleccionado</strong>
+                <span id="toolStatus">Selecciona un personaje para comenzar.</span>
+            </div>
+        </aside>
+
+    </main>
+
+    <div class="guide">
+        <span><strong>Clic rápido</strong> = placement</span>
+        <span><strong>Mantener pulsado</strong> = placement + lock</span>
+        <span><strong>Hover</strong> = posiciones posibles</span>
+        <span><strong>✕</strong> = marcar casilla imposible</span>
+        <span><strong>↶</strong> = deshacer</span>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="modalBackdrop" class="modal-backdrop">
+    <div id="modal" class="modal"></div>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   DATOS DEL JUEGO
+========================================================= */
+
+const people = [
+    {
+        id: "austin",
+        name: "Austin",
+        clue: "Estaba junto a un estante.",
+        avatarClass: "austin"
+    },
+    {
+        id: "barbara",
+        name: "Barbara",
+        clue: "Estaba en la cama.",
+        avatarClass: "barbara"
+    },
+    {
+        id: "charlotte",
+        name: "Charlotte",
+        clue: "Era la única persona sentada en una silla.",
+        avatarClass: "charlotte"
+    },
+    {
+        id: "dean",
+        name: "Dean",
+        clue: "Estaba en la Cocina.",
+        avatarClass: "dean"
+    },
+    {
+        id: "enid",
+        name: "Enid",
+        clue: "Estaba junto al televisor.",
+        avatarClass: "enid"
+    },
+    {
+        id: "vaughn",
+        name: "Vaughn",
+        clue: "La víctima. Estaba a solas con el asesino.",
+        avatarClass: "vaughn"
+    }
+];
+
+const solution = {
+    austin: [3, 1],
+    barbara: [1, 0],
+    charlotte: [0, 5],
+    dean: [5, 2],
+    enid: [2, 3],
+    vaughn: [4, 4]
+};
+
+const objects = {
+    "0,0": "sofa",
+    "0,1": "sofa",
+
+    "0,4": "plant",
+    "0,5": "chair",
+
+    "1,0": "bed",
+
+    "1,4": "sink",
+
+    "2,0": "shelf",
+    "2,2": "plant",
+    "2,3": "chair",
+    "2,4": "bathtub",
+
+    "3,0": "shelf",
+    "3,3": "tv",
+    "3,5": "chair",
+
+    "4,1": "table",
+
+    "5,1": "shelf",
+    "5,5": "plant"
+};
+
+/* =========================================================
+   ESTADO
+========================================================= */
+
+const cells = {};
+const placements = {};
+const notes = {};
+const impossible = new Set();
+
+const lockedRows = new Map();
+const lockedCols = new Map();
+
+let selected = null;
+let hoveredPerson = null;
+let toolMode = null;
+
+let holdTimer = null;
+let holdTriggered = false;
+let pointerCell = null;
+
+let undoStack = [];
+
+let seconds = 0;
+let timerInterval = null;
+
+let incorrectCells = new Set();
+
+const house = document.getElementById("house");
+const peopleList = document.getElementById("peopleList");
+const timerElement = document.getElementById("timer");
+const selectionStatus = document.getElementById("selectionStatus");
+const toolStatus = document.getElementById("toolStatus");
+const impossibleBtn = document.getElementById("impossibleBtn");
+const eraseBtn = document.getElementById("eraseBtn");
+const undoBtn = document.getElementById("undoBtn");
+const hintBtn = document.getElementById("hintBtn");
+const sendBtn = document.getElementById("sendBtn");
+const howBtn = document.getElementById("howBtn");
+const modalBackdrop = document.getElementById("modalBackdrop");
+const modal = document.getElementById("modal");
+const toastElement = document.getElementById("toast");
+
+/* =========================================================
+   FUNCIONES DE LÓGICA
+========================================================= */
+
+function room(r, c) {
+    if (r <= 1 && c >= 4) return 'bath';
+    if (r >= 1 && r <= 3 && c <= 1) return 'bedroom';
+    if (r >= 4 && c <= 2) return 'kitchen';
+    return 'living';
+}
+
+function adjacent(r1, c1, r2, c2) {
+    return Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1;
+}
+
+function clueAllows(person, r, c) {
+    const key = r + "," + c;
+    const object = objects[key];
+
+    if (!person) {
+        return false;
+    }
+
+    if (person.id === "austin") {
+        if (object === "shelf") {
+            return false;
+        }
+
+        for (let rr = 0; rr < 6; rr++) {
+            for (let cc = 0; cc < 6; cc++) {
+                if (objects[rr + "," + cc] === "shelf" &&
+                    adjacent(r, c, rr, cc)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    if (person.id === "barbara") {
+        return object === "bed";
+    }
+
+    if (person.id === "charlotte") {
+        return object === "chair";
+    }
+
+    if (person.id === "dean") {
+        return room(r, c) === "kitchen" && !object;
+    }
+
+    if (person.id === "enid") {
+        if (object === "tv") {
+            return false;
+        }
+
+        const tvPositions = [];
+
+        for (let rr = 0; rr < 6; rr++) {
+            for (let cc = 0; cc < 6; cc++) {
+                if (objects[rr + "," + cc] === "tv") {
+                    tvPositions.push([rr, cc]);
+                }
+            }
+        }
+
+        return tvPositions.some(function(tv) {
+            return adjacent(r, c, tv[0], tv[1]);
+        });
+    }
+
+    if (person.id === "vaughn") {
+        return room(r, c) === "living" && !object;
+    }
+
+    return false;
+}
+
+function getHighlightPerson() {
+    return hoveredPerson || selected;
+}
+
+function getPerson(id) {
+    return people.find(function(person) {
+        return person.id === id;
+    });
+}
+
+function getPlacementAt(r, c) {
+    const found = Object.keys(placements).find(function(id) {
+        return placements[id][0] === r && placements[id][1] === c;
+    });
+
+    return found || null;
+}
+
+function canPlace(personId, r, c) {
+    const person = getPerson(personId);
+
+    if (!person) {
+        return false;
+    }
+
+    if (r < 0 || r > 5 || c < 0 || c > 5) {
+        return false;
+    }
+
+    const key = r + "," + c;
+
+    if (impossible.has(key)) {
+        return false;
+    }
+
+    const existingPerson = getPlacementAt(r, c);
+
+    if (existingPerson && existingPerson !== personId) {
+        return false;
+    }
+
+    if (!clueAllows(person, r, c)) {
+        return false;
+    }
+
+    const currentPosition = placements[personId];
+
+    if (currentPosition &&
+        currentPosition[0] === r &&
+        currentPosition[1] === c) {
+        return true;
+    }
+
+    if (lockedRows.has(r) && lockedRows.get(r) !== personId) {
+        return false;
+    }
+
+    if (lockedCols.has(c) && lockedCols.get(c) !== personId) {
+        return false;
+    }
+
+    return true;
+}
+
+/* =========================================================
+   AVATARES
+========================================================= */
+
+function createAvatar(className, tokenMode) {
+    const avatar = document.createElement("div");
+    avatar.className =
+        (tokenMode ? "token-avatar " : "avatar ") +
+        className;
+
+    avatar.innerHTML = `
+        <span class="head"></span>
+        <span class="hair"></span>
+        <span class="eye left"></span>
+        <span class="eye right"></span>
+        ${className === "dean" ? '<span class="feature"></span>' : ""}
+        <span class="body"></span>
+    `;
+
+    return avatar;
+}
+
+/* =========================================================
+   RENDER PERSONAJES
+========================================================= */
+
+function renderPeople() {
+    peopleList.innerHTML = "";
+
+    people.forEach(function(person) {
+        const card = document.createElement("div");
+
+        card.className =
+            "person-card" +
+            (selected === person.id ? " selected" : "");
+
+        card.dataset.person = person.id;
+        card.draggable = true;
+
+        const avatar = createAvatar(
+            person.avatarClass +
+            (person.id === "dean" ? " glasses" : ""),
+            false
+        );
+
+        const content = document.createElement("div");
+
+        const name = document.createElement("div");
+        name.className = "card-name";
+        name.textContent = person.name;
+
+        const clue = document.createElement("div");
+        clue.className = "card-clue";
+        clue.textContent = person.clue;
+
+        content.appendChild(name);
+        content.appendChild(clue);
+
+        card.appendChild(avatar);
+        card.appendChild(content);
+
+        card.addEventListener("click", function() {
+            selectPerson(person.id);
+        });
+
+        card.addEventListener("mouseenter", function() {
+            hoveredPerson = person.id;
+            renderScene();
+        });
+
+        card.addEventListener("mouseleave", function() {
+            hoveredPerson = null;
+            renderScene();
+        });
+
+        card.addEventListener("dragstart", function(event) {
+            event.dataTransfer.setData("text/plain", person.id);
+            event.dataTransfer.effectAllowed = "move";
+            selected = person.id;
+            renderPeople();
+            renderScene();
+        });
+
+        card.addEventListener("dragend", function() {
+            hoveredPerson = null;
+        });
+
+        peopleList.appendChild(card);
+    });
+}
+
+/* =========================================================
+   RENDER ESCENA
+========================================================= */
+
+function renderScene() {
+    house.innerHTML = "";
+
+    for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
+
+            const key = r + "," + c;
+            const cell = document.createElement("div");
+
+            cell.className = "cell " + room(r, c);
+            cell.dataset.row = r;
+            cell.dataset.col = c;
+
+            const currentRoom = room(r, c);
+            const rightRoom = c < 5 ? room(r, c + 1) : null;
+            const bottomRoom = r < 5 ? room(r + 1, c) : null;
+
+            if (rightRoom && rightRoom !== currentRoom) {
+                cell.classList.add("room-edge-right");
+            }
+
+            if (bottomRoom && bottomRoom !== currentRoom) {
+                cell.classList.add("room-edge-bottom");
+            }
+
+            const label = getRoomLabel(r, c);
+
+            if (label) {
+                const labelElement = document.createElement("div");
+                labelElement.className = "room-label";
+
+                if (label.length > 9) {
+                    labelElement.classList.add("small");
+                }
+
+                labelElement.textContent = label;
+                cell.appendChild(labelElement);
+            }
+
+            const highlightPerson = getHighlightPerson();
+
+            if (highlightPerson &&
+                clueAllows(getPerson(highlightPerson), r, c) &&
+                canPlace(highlightPerson, r, c)) {
+
+                cell.classList.add("highlight");
+            }
+
+            if (impossible.has(key)) {
+                cell.classList.add("impossible");
+
+                const mark = document.createElement("div");
+                mark.className = "impossible-mark";
+                mark.textContent = "×";
+                cell.appendChild(mark);
+            }
+
+            if (incorrectCells.has(key)) {
+                cell.classList.add("incorrect");
+            }
+
+            if (objects[key]) {
+                const objectElement = createObject(objects[key]);
+                cell.appendChild(objectElement);
+            }
+
+            const placedId = getPlacementAt(r, c);
+
+            if (placedId) {
+                const person = getPerson(placedId);
+                const token = createToken(person);
+
+                cell.appendChild(token);
+            }
+
+            cells[key] = cell;
+
+            setupCellEvents(cell, r, c);
+
+            house.appendChild(cell);
+        }
+    }
+
+    updateStatus();
+}
+
+function getRoomLabel(r, c) {
+    if (r === 0 && c === 4) return "BAÑO";
+    if (r === 1 && c === 0) return "DORMITORIO";
+    if (r === 4 && c === 0) return "COCINA";
+    if (r === 0 && c === 2) return "SALA DE ESTAR";
+    return "";
+}
+
+/* =========================================================
+   OBJETOS
+========================================================= */
+
+function createObject(type) {
+    const object = document.createElement("div");
+    object.className = "object " + type;
+
+    if (type === "sofa") {
+        object.innerHTML = `
+            <span class="sofa-back"></span>
+            <span class="sofa-seat"></span>
+            <span class="arm left"></span>
+            <span class="arm right"></span>
+        `;
+    }
+
+    if (type === "chair") {
+        object.innerHTML = `
+            <span class="chair-back"></span>
+            <span class="chair-seat"></span>
+            <span class="leg l1"></span>
+            <span class="leg l2"></span>
+        `;
+    }
+
+    if (type === "bed") {
+        object.innerHTML = `
+            <span class="headboard"></span>
+            <span class="mattress"></span>
+            <span class="blanket"></span>
+            <span class="pillow"></span>
+        `;
+    }
+
+    if (type === "shelf") {
+        object.innerHTML = `
+            <span class="side left"></span>
+            <span class="side right"></span>
+            <span class="level l1"></span>
+            <span class="level l2"></span>
+            <span class="level l3"></span>
+            <span class="level l4"></span>
+            <span class="book b1"></span>
+            <span class="book b2"></span>
+            <span class="book b3"></span>
+            <span class="book b4"></span>
+            <span class="book b5"></span>
+        `;
+    }
+
+    if (type === "tv") {
+        object.innerHTML = `
+            <span class="screen"></span>
+            <span class="stand"></span>
+            <span class="base"></span>
+        `;
+    }
+
+    if (type === "table") {
+        object.innerHTML = `
+            <span class="top"></span>
+            <span class="leg l1"></span>
+            <span class="leg l2"></span>
+        `;
+    }
+
+    if (type === "plant") {
+        object.innerHTML = `
+            <span class="leaf l1"></span>
+            <span class="leaf l2"></span>
+            <span class="leaf l3"></span>
+            <span class="leaf l4"></span>
+            <span class="pot"></span>
+        `;
+    }
+
+    if (type === "sink") {
+        object.innerHTML = `
+            <span class="faucet"></span>
+            <span class="water"></span>
+            <span class="basin"></span>
+        `;
+    }
+
+    if (type === "bathtub") {
+        object.innerHTML = `
+            <span class="body"></span>
+            <span class="water"></span>
+            <span class="leg l"></span>
+            <span class="leg r"></span>
+        `;
+    }
+
+    return object;
+}
+
+/* =========================================================
+   TOKENS
+========================================================= */
+
+function createToken(person) {
+    const token = document.createElement("div");
+    token.className = "person-token";
+
+    const avatar = createAvatar(
+        person.avatarClass +
+        (person.id === "dean" ? " glasses" : ""),
+        true
+    );
+
+    const label = document.createElement("div");
+    label.className = "token-label";
+    label.textContent = person.name;
+
+    token.appendChild(avatar);
+    token.appendChild(label);
+
+    return token;
+}
+
+/* =========================================================
+   SELECCIÓN
+========================================================= */
+
+function selectPerson(id) {
+    selected = id;
+    toolMode = null;
+    impossibleBtn.classList.remove("active");
+    eraseBtn.classList.remove("active");
+
+    renderPeople();
+    renderScene();
+
+    const person = getPerson(id);
+
+    if (person) {
+        showToast(person.name + " seleccionado");
+    }
+}
+
+/* =========================================================
+   EVENTOS DE CELDAS
+========================================================= */
+
+function setupCellEvents(cell, r, c) {
+
+    cell.addEventListener("dragover", function(event) {
+        if (!selected) return;
+
+        if (canPlace(selected, r, c)) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+        }
+    });
+
+    cell.addEventListener("drop", function(event) {
+        event.preventDefault();
+
+        const draggedId = event.dataTransfer.getData("text/plain");
+
+        if (draggedId) {
+            selected = draggedId;
+            placePerson(draggedId, r, c, false);
+        }
+    });
+
+    cell.addEventListener("pointerdown", function(event) {
+        if (event.button !== 0) return;
+
+        pointerCell = {r:r, c:c};
+        holdTriggered = false;
+
+        if (toolMode === "impossible" || toolMode === "erase") {
+            return;
+        }
+
+        if (!selected) {
+            return;
+        }
+
+        holdTimer = setTimeout(function() {
+            holdTriggered = true;
+
+            if (canPlace(selected, r, c)) {
+                placePerson(selected, r, c, true);
+            } else {
+                showToast("Esa posición no es válida para este personaje.");
+            }
+        }, 450);
+    });
+
+    cell.addEventListener("pointerup", function(event) {
+        if (holdTimer) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+        }
+
+        if (holdTriggered) {
+            holdTriggered = false;
+            return;
+        }
+
+        if (!pointerCell ||
+            pointerCell.r !== r ||
+            pointerCell.c !== c) {
+            return;
+        }
+
+        if (toolMode === "impossible") {
+            toggleImpossible(r, c);
+            return;
+        }
+
+        if (toolMode === "erase") {
+            eraseCell(r, c);
+            return;
+        }
+
+        if (!selected) {
+            const placed = getPlacementAt(r, c);
+
+            if (placed) {
+                selectPerson(placed);
+            }
+
+            return;
+        }
+
+        placePerson(selected, r, c, false);
+    });
+
+    cell.addEventListener("pointercancel", function() {
+        if (holdTimer) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+        }
+
+        holdTriggered = false;
+    });
+}
+
+/* =========================================================
+   COLOCACIÓN
+========================================================= */
+
+function placePerson(personId, r, c, withLock) {
+    if (!canPlace(personId, r, c)) {
+        showToast("Esa posición no es válida para este personaje.");
+        return false;
+    }
+
+    saveUndo();
+
+    removeLocksForPerson(personId);
+
+    const previousId = getPlacementAt(r, c);
+
+    if (previousId && previousId !== personId) {
+        return false;
+    }
+
+    placements[personId] = [r, c];
+
+    if (withLock) {
+        setLocksForPerson(personId, r, c);
+    }
+
+    incorrectCells.clear();
+
+    renderPeople();
+    renderScene();
+
+    if (withLock) {
+        showToast("Personaje colocado y fila/columna bloqueadas.");
+    } else {
+        showToast(getPerson(personId).name + " colocado.");
+    }
+
+    return true;
+}
+
+function removePerson(personId) {
+    if (!placements[personId]) {
+        return;
+    }
+
+    saveUndo();
+
+    delete placements[personId];
+    removeLocksForPerson(personId);
+
+    incorrectCells.clear();
+
+    renderScene();
+}
+
+function setLocksForPerson(personId, r, c) {
+    lockedRows.set(r, personId);
+    lockedCols.set(c, personId);
+}
+
+function removeLocksForPerson(personId) {
+    for (const [row, id] of lockedRows.entries()) {
+        if (id === personId) {
+            lockedRows.delete(row);
+        }
+    }
+
+    for (const [col, id] of lockedCols.entries()) {
+        if (id === personId) {
+            lockedCols.delete(col);
+        }
+    }
+}
+
+/* =========================================================
+   X / IMPOSIBLE
+========================================================= */
+
+function toggleImpossible(r, c) {
+    const key = r + "," + c;
+
+    if (getPlacementAt(r, c)) {
+        showToast("No puedes marcar con X una casilla ocupada.");
+        return;
+    }
+
+    saveUndo();
+
+    if (impossible.has(key)) {
+        impossible.delete(key);
+        showToast("Casilla disponible.");
+    } else {
+        impossible.add(key);
+        showToast("Casilla marcada como imposible.");
+    }
+
+    incorrectCells.clear();
+    renderScene();
+}
+
+function eraseCell(r, c) {
+    const key = r + "," + c;
+    const personId = getPlacementAt(r, c);
+
+    if (!personId &&
+        !impossible.has(key) &&
+        !notes[key]) {
+        return;
+    }
+
+    saveUndo();
+
+    if (personId) {
+        delete placements[personId];
+        removeLocksForPerson(personId);
+    }
+
+    impossible.delete(key);
+    delete notes[key];
+
+    incorrectCells.clear();
+
+    renderPeople();
+    renderScene();
+
+    showToast("Casilla borrada.");
+}
+
+/* =========================================================
+   BORRADO COMPLETO
+========================================================= */
+
+function clearEverything() {
+    saveUndo();
+
+    Object.keys(placements).forEach(function(id) {
+        delete placements[id];
+    });
+
+    Object.keys(notes).forEach(function(key) {
+        delete notes[key];
+    });
+
+    impossible.clear();
+    lockedRows.clear();
+    lockedCols.clear();
+    incorrectCells.clear();
+
+    renderPeople();
+    renderScene();
+
+    showToast("Tablero limpiado.");
+}
+
+/* =========================================================
+   UNDO
+========================================================= */
+
+function clonePlacements(source) {
+    const result = {};
+
+    Object.keys(source).forEach(function(id) {
+        result[id] = [source[id][0], source[id][1]];
+    });
+
+    return result;
+}
+
+function cloneNotes(source) {
+    const result = {};
+
+    Object.keys(source).forEach(function(key) {
+        result[key] = source[key];
+    });
+
+    return result;
+}
+
+function saveUndo() {
+    const snapshot = {
+        placements: clonePlacements(placements),
+        notes: cloneNotes(notes),
+        impossible: Array.from(impossible),
+        lockedRows: Array.from(lockedRows.entries()),
+        lockedCols: Array.from(lockedCols.entries())
+    };
+
+    undoStack.push(snapshot);
+
+    if (undoStack.length > 80) {
+        undoStack.shift();
+    }
+}
+
+function restore(snapshot) {
+    Object.keys(placements).forEach(function(id) {
+        delete placements[id];
+    });
+
+    Object.keys(snapshot.placements).forEach(function(id) {
+        placements[id] = [
+            snapshot.placements[id][0],
+            snapshot.placements[id][1]
+        ];
+    });
+
+    Object.keys(notes).forEach(function(key) {
+        delete notes[key];
+    });
+
+    Object.keys(snapshot.notes).forEach(function(key) {
+        notes[key] = snapshot.notes[key];
+    });
+
+    impossible.clear();
+
+    snapshot.impossible.forEach(function(key) {
+        impossible.add(key);
+    });
+
+    lockedRows.clear();
+    lockedCols.clear();
+
+    snapshot.lockedRows.forEach(function(entry) {
+        lockedRows.set(Number(entry[0]), entry[1]);
+    });
+
+    snapshot.lockedCols.forEach(function(entry) {
+        lockedCols.set(Number(entry[0]), entry[1]);
+    });
+
+    incorrectCells.clear();
+
+    renderPeople();
+    renderScene();
+}
+
+function undo() {
+    if (undoStack.length === 0) {
+        showToast("No hay ninguna acción para deshacer.");
+        return;
+    }
+
+    const snapshot = undoStack.pop();
+
+    restore(snapshot);
+
+    showToast("Acción deshecha.");
+}
+
+/* =========================================================
+   VALIDACIÓN
+========================================================= */
+
+function validate() {
+    incorrectCells.clear();
+
+    const missing = people.filter(function(person) {
+        return !placements[person.id];
+    });
+
+    if (missing.length > 0) {
+        showModal(
+            "missing",
+            `
+            <div class="success-icon">🔎</div>
+            <h2>Aún faltan personajes</h2>
+            <p>
+                Coloca a los 6 sospechosos antes de comprobar
+                la solución.
+            </p>
+            <button class="close" type="button" onclick="closeModal()">CONTINUAR</button>
+            `
+        );
+
+        return;
+    }
+
+    let allCorrect = true;
+    const errors = [];
+
+    people.forEach(function(person) {
+        const actual = placements[person.id];
+        const expected = solution[person.id];
+
+        if (actual[0] !== expected[0] ||
+            actual[1] !== expected[1]) {
+
+            allCorrect = false;
+
+            incorrectCells.add(actual[0] + "," + actual[1]);
+
+            errors.push(
+                person.name +
+                " no está en la posición correcta."
+            );
+        }
+    });
+
+    renderScene();
+
+    if (allCorrect) {
+        showModal(
+            "success",
+            `
+            <div class="success-modal">
+                <div class="success-icon">🎉</div>
+                <h2>¡Misterio resuelto!</h2>
+
+                <div class="solution-text">
+                    La víctima era Vaughn.<br><br>
+                    La asesina es Enid.<br><br>
+                    ¡Excelente trabajo!
+                </div>
+
+                <p>
+                    Has colocado correctamente a los seis personajes.
+                </p>
+
+                <button class="close" type="button" onclick="closeModal()">
+                    CERRAR
+                </button>
+            </div>
+            `
+        );
+
+        stopTimer();
+
+    } else {
+        showModal(
+            "error",
+            `
+            <div class="error-modal">
+                <div class="success-icon">🕵️</div>
+                <h2>Todavía no…</h2>
+
+                <p>
+                    Hay personajes en lugares incorrectos.
+                    Revisa las pistas y vuelve a intentarlo.
+                </p>
+
+                <div class="error-list">
+                    ${errors.map(function(error) {
+                        return `<div class="error-item">${error}</div>`;
+                    }).join("")}
+                </div>
+
+                <button class="close" type="button" onclick="closeModal()">
+                    SEGUIR INVESTIGANDO
+                </button>
+            </div>
+            `
+        );
+    }
+}
+
+/* =========================================================
+   PISTA
+========================================================= */
+
+function giveHint() {
+    const unplaced = people.filter(function(person) {
+        return !placements[person.id];
+    });
+
+    let person;
+
+    if (selected && !placements[selected]) {
+        person = getPerson(selected);
+    } else if (unplaced.length > 0) {
+        person = unplaced[0];
+    } else {
+        const incorrect = people.find(function(p) {
+            const actual = placements[p.id];
+            const expected = solution[p.id];
+
+            return actual[0] !== expected[0] ||
+                   actual[1] !== expected[1];
+        });
+
+        person = incorrect || people[0];
+    }
+
+    if (!person) return;
+
+    selected = person.id;
+    renderPeople();
+    renderScene();
+
+    const hintMessages = {
+        austin:
+            "Pista: busca las casillas que estén inmediatamente al lado de una estantería.",
+        barbara:
+            "Pista: Barbara no está simplemente en un dormitorio. Busca el mueble mencionado en su pista.",
+        charlotte:
+            "Pista: Charlotte necesita una silla. No cualquier casilla de la casa sirve.",
+        dean:
+            "Pista: la pista de Dean se refiere al espacio libre de la Cocina.",
+        enid:
+            "Pista: localiza primero el televisor y mira únicamente sus cuatro vecinos ortogonales.",
+        vaughn:
+            "Pista: Vaughn es la víctima. Busca una casilla libre de la Sala de estar."
+    };
+
+    showModal(
+        "hint",
+        `
+        <div>
+            <div class="success-icon">💡</div>
+            <h2>Pista para ${person.name}</h2>
+            <p>${hintMessages[person.id]}</p>
+            <p>
+                Las casillas verdes indican posiciones compatibles
+                con la pista actual.
+            </p>
+            <button class="close" type="button" onclick="closeModal()">
+                ENTENDIDO
+            </button>
+        </div>
+        `
+    );
+}
+
+/* =========================================================
+   CÓMO JUGAR
+========================================================= */
+
+function showHowToPlay() {
+    showModal(
+        "how",
+        `
+        <div>
+            <h2>Cómo jugar</h2>
+
+            <ol class="how-list">
+                <li>Selecciona un sospechoso.</li>
+                <li>Lee su pista.</li>
+                <li>
+                    Las casillas verdes son compatibles con su pista.
+                </li>
+                <li>Las casillas con × están descartadas.</li>
+                <li>Clic rápido = colocar.</li>
+                <li>
+                    Mantener pulsado = colocar y bloquear
+                    fila/columna.
+                </li>
+                <li>Puedes arrastrar los personajes.</li>
+                <li>
+                    Usa X para marcar posiciones imposibles.
+                </li>
+                <li>
+                    Usa Deshacer para corregir errores.
+                </li>
+                <li>
+                    Cuando estén todos colocados, pulsa ENVIAR.
+                </li>
+            </ol>
+
+            <button class="close" type="button" onclick="closeModal()">
+                EMPEZAR
+            </button>
+        </div>
+        `
+    );
+}
+
+/* =========================================================
+   MODALES
+========================================================= */
+
+function showModal(type, content) {
+    modal.innerHTML = content;
+    modalBackdrop.classList.add("open");
+}
+
+function closeModal() {
+    modalBackdrop.classList.remove("open");
+}
+
+modalBackdrop.addEventListener("click", function(event) {
+    if (event.target === modalBackdrop) {
+        closeModal();
+    }
+});
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+let toastTimer = null;
+
+function showToast(message) {
+    toastElement.textContent = message;
+    toastElement.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(function() {
+        toastElement.classList.remove("show");
+    }, 1800);
+}
+
+/* =========================================================
+   ESTADO VISUAL
+========================================================= */
+
+function updateStatus() {
+    if (selected) {
+        const person = getPerson(selected);
+
+        if (person) {
+            selectionStatus.textContent =
+                "Seleccionado: " + person.name;
+
+            toolStatus.innerHTML =
+                '<span class="highlight-key"></span>' +
+                " posiciones compatibles con su pista.";
+        }
+    } else {
+        selectionStatus.textContent =
+            "Ningún sospechoso seleccionado";
+
+        if (toolMode === "impossible") {
+            toolStatus.textContent =
+                "Haz clic en una casilla para marcarla con X.";
+        } else if (toolMode === "erase") {
+            toolStatus.textContent =
+                "Haz clic en una casilla para borrarla.";
+        } else {
+            toolStatus.textContent =
+                "Selecciona un personaje para comenzar.";
+        }
+    }
+}
+
+/* =========================================================
+   BOTONES
+========================================================= */
+
+impossibleBtn.addEventListener("click", function() {
+    if (toolMode === "impossible") {
+        toolMode = null;
+        impossibleBtn.classList.remove("active");
+        showToast("Modo X desactivado.");
+    } else {
+        toolMode = "impossible";
+        impossibleBtn.classList.add("active");
+        eraseBtn.classList.remove("active");
+        selected = null;
+        renderPeople();
+        renderScene();
+        showToast("Modo X activado.");
+    }
+});
+
+eraseBtn.addEventListener("pointerdown", function() {
+    eraseBtn.dataset.holdStart = String(Date.now());
+
+    clearTimeout(eraseBtn._holdTimer);
+
+    eraseBtn._holdTimer = setTimeout(function() {
+        if (eraseBtn.dataset.holdStart) {
+            eraseBtn.dataset.clearTriggered = "true";
+            clearEverything();
+        }
+    }, 700);
+});
+
+eraseBtn.addEventListener("pointerup", function() {
+    clearTimeout(eraseBtn._holdTimer);
+
+    if (eraseBtn.dataset.clearTriggered === "true") {
+        eraseBtn.dataset.clearTriggered = "false";
+        eraseBtn.dataset.holdStart = "";
+        return;
+    }
+
+    eraseBtn.dataset.holdStart = "";
+
+    if (toolMode === "erase") {
+        toolMode = null;
+        eraseBtn.classList.remove("active");
+        showToast("Modo borrar desactivado.");
+    } else {
+        toolMode = "erase";
+        eraseBtn.classList.add("active");
+        impossibleBtn.classList.remove("active");
+        selected = null;
+        renderPeople();
+        renderScene();
+        showToast("Modo borrar activado.");
+    }
+});
+
+eraseBtn.addEventListener("pointercancel", function() {
+    clearTimeout(eraseBtn._holdTimer);
+    eraseBtn.dataset.holdStart = "";
+    eraseBtn.dataset.clearTriggered = "false";
+});
+
+undoBtn.addEventListener("click", undo);
+hintBtn.addEventListener("click", giveHint);
+sendBtn.addEventListener("click", validate);
+howBtn.addEventListener("click", showHowToPlay);
+
+/* =========================================================
+   TEMPORIZADOR
+========================================================= */
+
+function formatTime(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const secondsPart = totalSeconds % 60;
+
+    return String(minutes).padStart(2, "0") +
+        ":" +
+        String(secondsPart).padStart(2, "0");
+}
+
+function startTimer() {
+    if (timerInterval) {
+        return;
+    }
+
+    timerInterval = setInterval(function() {
+        seconds++;
+        timerElement.textContent = formatTime(seconds);
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+}
+
+/* =========================================================
+   INICIALIZACIÓN
+========================================================= */
+
+function verifySolutionInternally() {
+    const tests = [
+        ["austin", 3, 1],
+        ["barbara", 1, 0],
+        ["charlotte", 0, 5],
+        ["dean", 5, 2],
+        ["enid", 2, 3],
+        ["vaughn", 4, 4]
+    ];
+
+    return tests.every(function(test) {
+        return canPlace(test[0], test[1], test[2]);
+    });
+}
+
+function initializeGame() {
+    renderPeople();
+    renderScene();
+    startTimer();
+
+    /*
+     * Comprobación interna de las seis posiciones de solución.
+     * No altera el estado del tablero.
+     */
+    const solutionIsValid = verifySolutionInternally();
+
+    if (!solutionIsValid) {
+        console.error(
+            "Error interno: una o más posiciones de solución no son válidas."
+        );
+    }
+}
+
+initializeGame();
+</script>
+
+</body>
+</html>
